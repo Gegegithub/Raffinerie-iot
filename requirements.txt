@@ -1,2 +1,5 @@
 kafka-python==2.1.5
 paho-mqtt==2.1.0
+pip==25.0.1
+py4j==0.10.9.7
+pyspark==3.5.5
