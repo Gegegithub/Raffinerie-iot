@@ -1,17 +1,38 @@
 import time, json, random 
 import paho.mqtt.client as mqtt 
- 
+import math
+
 # Connexion au broker MQTT local 
 client = mqtt.Client() 
-client.connect("localhost", 1883, 60) 
- 
+client.connect("localhost", 1883, 60)
+
+# Paramètres pour le cycle de température
+temp_min = 90  # Température minimale en °C
+temp_max = 170  # Température maximale en °C
+
+# Variable pour suivre la direction de la température (montée ou descente)
+temp_current = temp_min
+temp_increasing = True
+temp_step = 2  # Changement de température à chaque itération
+
 while True: 
-    now = time.strftime('%Y-%m-%dT%H:%M:%SZ') 
- 
-    # Génération de données VALIDES qui passeront le filtre dans traitement_kpi.py
-    # Temperature entre 30 et 150
-    temp = round(random.uniform(30, 150), 2) 
-    # Vibration entre 0 et 5
+    now = time.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    # Calcul de la température avec augmentation/diminution progressive
+    if temp_increasing:
+        temp_current += temp_step
+        if temp_current >= temp_max:
+            temp_current = temp_max
+            temp_increasing = False
+    else:
+        temp_current -= temp_step
+        if temp_current <= temp_min:
+            temp_current = temp_min
+            temp_increasing = True
+    
+    temp = round(temp_current, 1)
+    
+    # Vibration aléatoire entre 0 et 5
     vib = round(random.uniform(0, 5), 2) 
  
     msg_temp = json.dumps({ 
@@ -31,5 +52,7 @@ while True:
     client.publish("raffinerie/temp", msg_temp) 
     client.publish("raffinerie/vib", msg_vib) 
  
-    print(f"Publiés → Temp: {temp}°C | Vib: {vib} mm/s") 
+    direction = "↗" if temp_increasing else "↘"
+    print(f"Publiés → Temp: {temp}°C {direction} | Vib: {vib} mm/s") 
+    
     time.sleep(2)
